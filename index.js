@@ -6,6 +6,13 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+let userCount = 0;
+
+// Serve the css file. (There might be a better way, consider refactoring.)
+app.get('/style.css', (req, res) => {
+    res.sendFile(__dirname + '/style.css');
+});
+
 // Basic route handler.
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
@@ -14,9 +21,13 @@ app.get('/', (req, res) => {
 // Assign callbacks to 'connection' and 'disconnect' socket events.
 io.on('connection', (socket) => {
     console.log('a user connected.');
+    userCount++;
+    socket.broadcast.emit('connection', userCount);
 
     socket.on('disconnect', () => {
         console.log('user disconnected.');
+        userCount--;
+        socket.broadcast.emit('user-disconnected', userCount);
     });
 
     socket.on('chat message', (msg) => {
